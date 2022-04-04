@@ -28,5 +28,5 @@ jobs:
           npm run lint
       - name: Deploy Cloud Functions
         run: |
-          firebase use contentflydev
+          firebase use contentflydev --token ${{ secrets.FIREBASE_TOKEN }}
           firebase deploy --only functions --token ${{ secrets.FIREBASE_TOKEN }}
