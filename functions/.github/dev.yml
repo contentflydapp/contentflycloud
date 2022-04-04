@@ -1,0 +1,26 @@
+name: Content Fly Cloud Dev CI / CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.13.0'
+          cache: 'npm'
+      - name: Install dependencies
+        run: |
+          cd functions
+          npm ci
+      - name: Run code check
+        run: npm run lint
+      - name: Deploy Cloud Functions
+        run: firebase deploy --only functions ${{ secrets.FIREBASE_TOKEN }}
