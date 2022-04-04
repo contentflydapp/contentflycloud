@@ -21,6 +21,8 @@ jobs:
           cd functions
           npm ci
       - name: Run code check
-        run: npm run lint
+        run: |
+          cd functions
+          npm run lint
       - name: Deploy Cloud Functions
         run: firebase deploy --only functions ${{ secrets.FIREBASE_TOKEN }}
