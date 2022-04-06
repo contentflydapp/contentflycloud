@@ -1,6 +1,10 @@
-const functions = require("firebase-functions")
+// Deploy to Firebase all functions: firebase deploy --only functions
+// Deploy to Firebase specific function: firebase deploy --only functions:store
 
-exports.helloWorld = functions.https.onRequest((request, response) => {
-  functions.logger.info("Hello logs!", { structuredData: true })
-  response.send("Hello from Content Fly Yay!")
-})
+// Email
+const {
+  fetchNewNotifications,
+  sendTransactionalEmail
+} = require("./entry/email")
+exports.fetchNewNotifications = fetchNewNotifications
+exports.sendTransactionalEmail = sendTransactionalEmail
