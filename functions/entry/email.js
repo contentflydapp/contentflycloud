@@ -64,7 +64,7 @@ exports.fetchNewNotifications = functions
 
         const allResult = await Promise.all(promiseArray)
         allResult.map(messageId => {
-          logger.info(`OrderPlaced message ${messageId} published.`)
+          logger.info(`NewEmailNotification message ${messageId} published.`)
         })
       }
 
