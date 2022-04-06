@@ -8,37 +8,65 @@ const { runtimeOpts, Topic, postmarkRuntimeOpts } = require("../utility/common")
 
 // Postmark
 const postmark = require("postmark")
-
 const FromEmail = "Content Fly <support@main.contentfly.app>"
 const StandatdTemplate = "standard-template"
+
+// Axios
+const http = require("http")
+const https = require("https")
+const axios = require("axios").default
+const axiosInstance = axios.create({
+  httpAgent: new http.Agent({ keepAlive: true }),
+  httpsAgent: new https.Agent({ keepAlive: true })
+})
 
 /**
  * Fetch notifications from Content Fly NotifyQueue canister
  *
  * FB Shell: fetchNewNotifications()
+ *
+ * Sample JSON:
+ * {
+      recipientEmail: "henry@kinwo.net",
+      recipientName: "Henry Chan",
+      subject: "Invitation from Apple",
+      topic: "inviteCreatorToJob",
+      mainContent: "Apple has sent you an invitation to pitch on their job.",
+      actionMessage: "Pitch Now",
+      actionURL:
+        "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"
+    }
  */
 exports.fetchNewNotifications = functions
   .runWith(runtimeOpts)
-  .pubsub.schedule("3 * * * *")
-  .timeZone("Australia/Melbourne")
+  .pubsub.schedule("every 120 minutes")
   .onRun(async context => {
     try {
-      // TODO - Fetch new email notifcations array JSON from Canister with max of 5, loop through it to publish message
-      const json = {
-        recipientEmail: "henry@kinwo.net",
-        recipientName: "Henry Chan",
-        subject: "Invitation from Apple",
-        topic: "inviteCreatorToJob",
-        mainContent: "Apple has sent you an invitation to pitch on their job.",
-        actionMessage: "Pitch Now",
-        actionURL:
-          "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"
-      }
-      const messageId = await pubsub
-        .topic(Topic.NewEmailNotification)
-        .publishMessage({ json })
+      const notifyQueueURL = process.env.NOTIFY_QUEUE_URL
 
-      logger.info(`OrderPlaced message ${messageId} published.`)
+      logger.info(`NOTIFY_QUEUE_URL=${notifyQueueURL}`)
+
+      const response = await axiosInstance.get(notifyQueueURL)
+      const { data, status } = response
+
+      logger.info(`Response ${status}: `)
+      logger.info(data)
+
+      if (data.result != null && data.result.length > 0) {
+        const promiseArray = []
+        for (const model of data.result) {
+          const json = model
+          const promise = pubsub
+            .topic(Topic.NewEmailNotification)
+            .publishMessage({ json })
+          promiseArray.push(promise)
+        }
+
+        const allResult = await Promise.all(promiseArray)
+        allResult.map(messageId => {
+          logger.info(`OrderPlaced message ${messageId} published.`)
+        })
+      }
 
       logger.info("Finishing running fetchNewNotifications")
     } catch (error) {
