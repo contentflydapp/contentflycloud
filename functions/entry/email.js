@@ -20,6 +20,10 @@ const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true })
 })
 
+const fetchEmailQueueInterval = process.env.FETCH_EMAIL_QUEUE_INTERVAL_MIN
+
+logger.info(`FETCH_EMAIL_QUEUE_INTERVAL_MIN=${fetchEmailQueueInterval}`)
+
 /**
  * Fetch notifications from Content Fly NotifyQueue canister
  *
@@ -39,7 +43,7 @@ const axiosInstance = axios.create({
  */
 exports.fetchNewNotifications = functions
   .runWith(runtimeOpts)
-  .pubsub.schedule("every 2 minutes")
+  .pubsub.schedule(`every ${fetchEmailQueueInterval} minutes`)
   .onRun(async context => {
     try {
       const notifyQueueURL = process.env.NOTIFY_QUEUE_URL
