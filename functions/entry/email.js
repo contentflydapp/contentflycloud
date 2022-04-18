@@ -39,18 +39,13 @@ const axiosInstance = axios.create({
  */
 exports.fetchNewNotifications = functions
   .runWith(runtimeOpts)
-  .pubsub.schedule("every 120 minutes")
+  .pubsub.schedule("every 2 minutes")
   .onRun(async context => {
     try {
       const notifyQueueURL = process.env.NOTIFY_QUEUE_URL
 
-      logger.info(`NOTIFY_QUEUE_URL=${notifyQueueURL}`)
-
       const response = await axiosInstance.get(notifyQueueURL)
-      const { data, status } = response
-
-      logger.info(`Response ${status}: `)
-      logger.info(data)
+      const { data } = response
 
       if (data.result != null && data.result.length > 0) {
         const promiseArray = []
@@ -67,8 +62,6 @@ exports.fetchNewNotifications = functions
           logger.info(`NewEmailNotification message ${messageId} published.`)
         })
       }
-
-      logger.info("Finishing running fetchNewNotifications")
     } catch (error) {
       logger.error("Error in fetchNewNotifications: ", error)
     }
@@ -85,8 +78,6 @@ exports.sendTransactionalEmail = functions
   .onPublish(async message => {
     try {
       const body = message.json
-
-      logger.info(`recipientEmail=${body.recipientEmail}`)
 
       const templateModel = {
         recipientName: body.recipientName,
