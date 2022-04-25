@@ -39,7 +39,7 @@ const axiosInstance = axios.create({
  */
 exports.fetchNewNotifications = functions
   .runWith(runtimeOpts)
-  .pubsub.schedule(`every 30 seconds`)
+  .pubsub.schedule(`every 1 minutes`)
   .onRun(async context => {
     try {
       const notifyQueueURL = process.env.NOTIFY_QUEUE_URL
