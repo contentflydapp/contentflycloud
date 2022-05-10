@@ -22,7 +22,7 @@
     "@google-cloud/pubsub": "^2.19.0",
     "axios": "^0.26.1",
     "firebase-admin": "^10.0.2",
-    "firebase-functions": "^3.20.0",
+    "firebase-functions": "^3.21.0",
     "postmark": "^3.0.1"
   },
   "devDependencies": {
