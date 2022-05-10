@@ -11,7 +11,7 @@ module.exports = {
     "quote-props": 0,
     semi: 0,
     quotes: 0,
-    indent: ["error", 2],
+    indent: [0, 2],
     "require-jsdoc": 0,
     "arrow-parens": 0,
     eqeqeq: 0,

@@ -9,7 +9,10 @@ const { runtimeOpts, Topic, postmarkRuntimeOpts } = require("../utility/common")
 // Postmark
 const postmark = require("postmark")
 const FromEmail = "Content Fly <support@main.contentfly.app>"
-const StandatdTemplate = "standard-template"
+
+const PostmarkTemplate = {
+  standard: "standard-template"
+}
 
 // Axios
 const http = require("http")
@@ -19,6 +22,8 @@ const axiosInstance = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true })
 })
+
+const MainContentSeparator = "##"
 
 /**
  * Fetch notifications from Content Fly NotifyQueue canister
@@ -71,6 +76,7 @@ exports.fetchNewNotifications = functions
  * Send email notification to user using Postmark
  *
  * FB Shell: sendTransactionalEmail({data: new Buffer('{"recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
+ * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "newChatMessage", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job##I have new chat message.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  */
 exports.sendTransactionalEmail = functions
   .runWith(postmarkRuntimeOpts)
@@ -78,14 +84,7 @@ exports.sendTransactionalEmail = functions
   .onPublish(async message => {
     try {
       const body = message.json
-
-      const templateModel = {
-        recipientName: body.recipientName,
-        subject: body.subject,
-        mainContent: body.mainContent,
-        actionMessage: body.actionMessage,
-        actionURL: body.actionURL
-      }
+      const templateModel = composeTemplateModel(body)
 
       const PostmarkServerToken = process.env.POSTMARK_SERVER_TOKEN
       const postmarkClient = new postmark.ServerClient(PostmarkServerToken)
@@ -93,7 +92,7 @@ exports.sendTransactionalEmail = functions
       const result = await postmarkClient.sendEmailWithTemplate({
         From: FromEmail,
         To: body.recipientEmail,
-        TemplateAlias: StandatdTemplate,
+        TemplateAlias: chooseTemplate(body.topic),
         TemplateModel: templateModel,
         MessageStream: "outbound"
       })
@@ -103,3 +102,55 @@ exports.sendTransactionalEmail = functions
       logger.error("Error caughe when sending email to user: ", error)
     }
   })
+
+const chooseTemplate = topic => {
+  switch (topic) {
+    case "newChatMessage":
+      return topic
+    default:
+      return PostmarkTemplate.standard
+  }
+}
+
+const composeTemplateModel = body => {
+  const {
+    topic,
+    recipientName,
+    subject,
+    mainContent,
+    actionMessage,
+    actionURL
+  } = body
+
+  const mainContentArray = mainContent.split(MainContentSeparator)
+
+  let introContent = ""
+  let message = ""
+
+  if (mainContentArray.length >= 2) {
+    introContent = mainContentArray[0]
+    message = mainContentArray[1]
+  }
+
+  switch (topic) {
+    case "newChatMessage": {
+      return {
+        recipientName: recipientName,
+        subject: subject,
+        introContent: introContent,
+        message: message,
+        actionMessage: actionMessage,
+        actionURL: actionURL
+      }
+    }
+    default: {
+      return {
+        recipientName: recipientName,
+        subject: subject,
+        mainContent: mainContent,
+        actionMessage: actionMessage,
+        actionURL: actionURL
+      }
+    }
+  }
+}
