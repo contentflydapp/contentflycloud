@@ -17,7 +17,7 @@
     "*.{js,css,md,html,json}": "prettier --write"
   },
   "devDependencies": {
-    "eslint": "^8.9.0",
+    "eslint": "^8.15.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
     "prettier": "^2.6.2"

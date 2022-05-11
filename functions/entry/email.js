@@ -4,9 +4,7 @@ const logger = require("firebase-functions/lib/logger")
 const { PubSub } = require("@google-cloud/pubsub")
 const pubsub = new PubSub()
 
-const { runtimeOpts, Topic, postmarkRuntimeOpts } = require("../utility/common")
-
-const moment = require("moment")
+const { runtimeOpts, Topic } = require("../utility/common")
 
 // Postmark
 const postmark = require("postmark")
@@ -34,6 +32,8 @@ const axiosInstance = axios.create({
 })
 
 const MainContentSeparator = "##"
+
+const moment = require("moment")
 
 /**
  * Fetch notifications from Content Fly NotifyQueue canister
@@ -90,15 +90,14 @@ exports.fetchNewNotifications = functions
  * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "jobAwarded", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "You’ve been selected as the (Creator Type) for the job (Job Name)", "mainContent": "(Buyer Name) has selected you as their (creator type) to undertake the following job:##(Job Name Job Name Job Name Job Name Job Name)##1652244893000000", "actionMessage": "Open Job", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  */
 exports.sendTransactionalEmail = functions
-  .runWith(postmarkRuntimeOpts)
+  .runWith(runtimeOpts)
   .pubsub.topic(Topic.NewEmailNotification)
   .onPublish(async message => {
     try {
+      const PostmarkServerToken = functions.config().postmark.servertoken
+      const postmarkClient = new postmark.ServerClient(PostmarkServerToken)
       const body = message.json
       const templateModel = composeTemplateModel(body)
-
-      const PostmarkServerToken = process.env.POSTMARK_SERVER_TOKEN
-      const postmarkClient = new postmark.ServerClient(PostmarkServerToken)
 
       const result = await postmarkClient.sendEmailWithTemplate({
         From: FromEmail,
