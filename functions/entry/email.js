@@ -94,11 +94,10 @@ exports.sendTransactionalEmail = functions
   .pubsub.topic(Topic.NewEmailNotification)
   .onPublish(async message => {
     try {
-      const body = message.json
-      const templateModel = composeTemplateModel(body)
-
       const PostmarkServerToken = process.env.POSTMARK_SERVER_TOKEN
       const postmarkClient = new postmark.ServerClient(PostmarkServerToken)
+      const body = message.json
+      const templateModel = composeTemplateModel(body)
 
       const result = await postmarkClient.sendEmailWithTemplate({
         From: FromEmail,
