@@ -4,7 +4,8 @@ const runtimeOpts = {
 }
 
 const postmarkRuntimeOpts = {
-  ...runtimeOpts,
+  timeoutSeconds: 540,
+  memory: "256MB",
   secrets: ["POSTMARK_SERVER_TOKEN"]
 }
 
