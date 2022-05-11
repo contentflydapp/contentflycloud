@@ -11,7 +11,16 @@ const postmark = require("postmark")
 const FromEmail = "Content Fly <support@main.contentfly.app>"
 
 const PostmarkTemplate = {
-  standard: "standard-template"
+  standard: "standard"
+}
+
+const NotifyTopicNonStandardTemplate = {
+  newChatMessage: "newChatMessage",
+  jobAwarded: "jobWithDueDate",
+  jobFirstDue: "jobWithDueDate",
+  jobPendingApproval: "standardTwoContent",
+  jobChangesRequested: "standardTwoContent",
+  jobApproved: "standardTwoContent"
 }
 
 // Axios
@@ -104,12 +113,8 @@ exports.sendTransactionalEmail = functions
   })
 
 const chooseTemplate = topic => {
-  switch (topic) {
-    case "newChatMessage":
-      return topic
-    default:
-      return PostmarkTemplate.standard
-  }
+  const template = NotifyTopicNonStandardTemplate[topic]
+  return template != null ? template : PostmarkTemplate.standard
 }
 
 const composeTemplateModel = body => {
