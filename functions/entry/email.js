@@ -6,12 +6,22 @@ const pubsub = new PubSub()
 
 const { runtimeOpts, Topic, postmarkRuntimeOpts } = require("../utility/common")
 
+const moment = require("moment")
+
 // Postmark
 const postmark = require("postmark")
-const FromEmail = "Content Fly <support@main.contentfly.app>"
 
+const FromEmail = "Content Fly <support@main.contentfly.app>"
 const PostmarkTemplate = {
-  standard: "standard-template"
+  standard: "standard",
+  newChatMessage: "newChatMessage",
+  jobWithDueDate: "jobWithDueDate"
+}
+
+const NotifyTopicNonStandardTemplate = {
+  newChatMessage: PostmarkTemplate.newChatMessage,
+  jobAwarded: PostmarkTemplate.jobWithDueDate,
+  jobFirstDue: PostmarkTemplate.jobWithDueDate
 }
 
 // Axios
@@ -75,8 +85,9 @@ exports.fetchNewNotifications = functions
 /**
  * Send email notification to user using Postmark
  *
- * FB Shell: sendTransactionalEmail({data: new Buffer('{"recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
+ * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "inviteCreatorToJob", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "newChatMessage", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job##I have new chat message.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
+ * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "jobAwarded", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "You’ve been selected as the (Creator Type) for the job (Job Name)", "mainContent": "(Buyer Name) has selected you as their (creator type) to undertake the following job:##(Job Name Job Name Job Name Job Name Job Name)##1652244893000000", "actionMessage": "Open Job", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  */
 exports.sendTransactionalEmail = functions
   .runWith(postmarkRuntimeOpts)
@@ -104,11 +115,30 @@ exports.sendTransactionalEmail = functions
   })
 
 const chooseTemplate = topic => {
+  const template = NotifyTopicNonStandardTemplate[topic]
+  return template != null ? template : PostmarkTemplate.standard
+}
+
+const splitMainContent = mainContent => {
+  const mainContentArray = mainContent.split(MainContentSeparator)
+  let firstContent = ""
+  let secondContent = ""
+
+  if (mainContentArray.length >= 2) {
+    firstContent = mainContentArray[0]
+    secondContent = mainContentArray[1]
+  }
+
+  return { firstContent, secondContent }
+}
+
+const greetingForTopic = (topic, recipientName) => {
   switch (topic) {
-    case "newChatMessage":
-      return topic
+    case "jobAwarded":
+    case "jobApproved":
+      return `Congratulations ${recipientName}!`
     default:
-      return PostmarkTemplate.standard
+      return `Hi ${recipientName}`
   }
 }
 
@@ -122,30 +152,63 @@ const composeTemplateModel = body => {
     actionURL
   } = body
 
-  const mainContentArray = mainContent.split(MainContentSeparator)
-
-  let introContent = ""
-  let message = ""
-
-  if (mainContentArray.length >= 2) {
-    introContent = mainContentArray[0]
-    message = mainContentArray[1]
-  }
+  const greetingWithRecipient = greetingForTopic(topic, recipientName)
 
   switch (topic) {
     case "newChatMessage": {
+      const { firstContent, secondContent } = splitMainContent(mainContent)
+
       return {
-        recipientName: recipientName,
+        recipientName: greetingWithRecipient,
         subject: subject,
-        introContent: introContent,
-        message: message,
+        introContent: firstContent,
+        message: secondContent,
+        actionMessage: actionMessage,
+        actionURL: actionURL
+      }
+    }
+    case "jobAwarded":
+    case "jobFirstDue": {
+      const mainContentArray = mainContent.split(MainContentSeparator)
+      let firstContent = ""
+      let secondContent = ""
+      let dueDate = ""
+
+      if (mainContentArray.length >= 3) {
+        firstContent = mainContentArray[0]
+        secondContent = mainContentArray[1]
+        const dueDateNanos = BigInt(mainContentArray[2])
+        const dueDateMillis = parseInt(Number(dueDateNanos / BigInt(1000)))
+        dueDate = moment(dueDateMillis).format("DD MMM YYYY")
+      }
+
+      return {
+        recipientName: greetingWithRecipient,
+        subject: subject,
+        initContent: firstContent,
+        mainContent: secondContent,
+        dueDate: dueDate,
+        actionMessage: actionMessage,
+        actionURL: actionURL
+      }
+    }
+    case "jobPendingApproval":
+    case "jobChangesRequested":
+    case "jobApproved": {
+      const { firstContent, secondContent } = splitMainContent(mainContent)
+
+      return {
+        recipientName: greetingWithRecipient,
+        subject: subject,
+        initContent: firstContent,
+        mainContent: secondContent,
         actionMessage: actionMessage,
         actionURL: actionURL
       }
     }
     default: {
       return {
-        recipientName: recipientName,
+        recipientName: greetingWithRecipient,
         subject: subject,
         mainContent: mainContent,
         actionMessage: actionMessage,
