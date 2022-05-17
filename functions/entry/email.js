@@ -87,7 +87,7 @@ exports.fetchNewNotifications = functions
  *
  * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "inviteCreatorToJob", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "newChatMessage", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "Invitation from Apple", "mainContent": "Apple has sent you an invitation to pitch on their job##I have new chat message.", "actionMessage": "Pitch Now", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
- * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "jobAwarded", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "You’ve been selected as the (Creator Type) for the job (Job Name)", "mainContent": "(Buyer Name) has selected you as their (creator type) to undertake the following job:##(Job Name Job Name Job Name Job Name Job Name)##1652244893000000", "actionMessage": "Open Job", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
+ * FB Shell: sendTransactionalEmail({data: new Buffer('{"topic": "jobAwarded", "recipientName": "Henry Chan", "recipientEmail": "henry@kinwo.net", "subject": "You’ve been selected as the (Creator Type) for the job (Job Name)", "mainContent": "(Buyer Name) has selected you as their (creator type) to undertake the following job:##(Job Name Job Name Job Name Job Name Job Name)##1653411600000000000", "actionMessage": "Open Job", "actionURL": "https://ypu2m-miaaa-aaaah-qamoq-cai.raw.ic0.app/myjobs.html?id=5"}')})
  */
 exports.sendTransactionalEmail = functions
   .runWith(runtimeOpts)
@@ -177,7 +177,7 @@ const composeTemplateModel = body => {
         firstContent = mainContentArray[0]
         secondContent = mainContentArray[1]
         const dueDateNanos = BigInt(mainContentArray[2])
-        const dueDateMillis = parseInt(Number(dueDateNanos / BigInt(1000)))
+        const dueDateMillis = parseInt(Number(dueDateNanos / BigInt(1000000)))
         dueDate = moment(dueDateMillis).format("DD MMM YYYY")
       }
 
