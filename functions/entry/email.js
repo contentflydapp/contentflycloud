@@ -59,7 +59,10 @@ exports.fetchNewNotifications = functions
     try {
       const notifyQueueURL = process.env.NOTIFY_QUEUE_URL
 
-      const response = await axiosInstance.get(notifyQueueURL)
+      const cfServerKey = functions.config().cf.serverkey
+      const response = await axiosInstance.get(notifyQueueURL, {
+        params: { serverKey: cfServerKey }
+      })
       const { data } = response
 
       if (data.result != null && data.result.length > 0) {
