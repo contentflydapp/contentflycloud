@@ -181,7 +181,7 @@ const composeTemplateModel = body => {
         secondContent = mainContentArray[1]
         const dueDateNanos = BigInt(mainContentArray[2])
         const dueDateMillis = parseInt(Number(dueDateNanos / BigInt(1000000)))
-        dueDate = moment.utc(dueDateMillis).format("DD MMM YYYY")
+        dueDate = moment.utc(dueDateMillis).format("DD MMM YYYY") + " UTC"
       }
 
       return {
