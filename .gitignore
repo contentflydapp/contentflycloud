@@ -104,3 +104,4 @@ dist
 .tern-port
 *.local
 functions/.runtimeconfig.json
+*.cache
